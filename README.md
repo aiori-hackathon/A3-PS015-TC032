@@ -1,4 +1,4 @@
-# Explainable Home and Last-Mile Connectivity Diagnosis
+<img width="1917" height="912" alt="image" src="https://github.com/user-attachments/assets/4ae1d2bd-06de-4477-989a-067220f6b511" /># Explainable Home and Last-Mile Connectivity Diagnosis
 
 **AIORI-3 Hackathon | Problem Statement PS-015 | Category: Smart Cities | Team code: A3-PS015-TC032**
 
@@ -7,7 +7,7 @@
 | Team | Divya PR, Sartaj S |
 | College mentor | Neethu Mariam Panicker |
 | Repository | https://github.com/divyapr-27/A3-PS015-TC032 |
-| Live demo | **TO BE ADDED: Streamlit Community Cloud URL (not deployed yet)** |
+| Live demo | https://youtu.be/qilcN_MvZMw?si=ic9kRI4UaPkU4kxY |
 | Original proposal | [`docs/proposal/Proposed-structure-hackathon.pdf`](docs/proposal/Proposed-structure-hackathon.pdf) |
 
 ## What is this?
