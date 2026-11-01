@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>Diagnostic Report A3-PS015-TC032</title>
+<style>body{font-family:Segoe UI,Arial,sans-serif;max-width:960px;margin:24px auto;padding:0 16px;color:#1f2937;background:#fbfaf7;line-height:1.5}
+h1{font-size:1.5rem;border-bottom:3px solid #0f766e;padding-bottom:6px}h2{font-size:1.1rem;margin-top:28px;color:#0f766e}
+table{border-collapse:collapse;width:100%;font-size:.88rem;margin:8px 0;background:#fff}th,td{border:1px solid #d6ddd6;padding:5px 8px;text-align:left;vertical-align:top}
+th{background:#e6f0ec}.banner{padding:10px 14px;border-radius:8px;background:#fef3c7;border:1px solid #e5b84a}
+.real{background:#dcfce7;border-color:#86c99a}</style></head><body>
+<h1>Diagnostic Report: Explainable Home and Last-Mile Connectivity Diagnosis</h1>
+<h2>Data source</h2>
+<p class='banner'>DATA SOURCE: SIMULATED. This report was produced from the lab simulator (scenario: inconclusive_conflict). The numbers are NOT real network measurements and are not fault-injection results.</p>
+<h2>Project</h2>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Project</td><td>Explainable Home and Last-Mile Connectivity Diagnosis</td></tr>
+<tr><td>Hackathon</td><td>AIORI-3 Hackathon | PS-015 | Smart Cities</td></tr>
+<tr><td>Team code</td><td>A3-PS015-TC032</td></tr>
+<tr><td>Team</td><td>Divya PR, Sartaj S</td></tr>
+<tr><td>College mentor</td><td>Neethu Mariam Panicker</td></tr>
+<tr><td>Report created</td><td>2026-10-30 05:52:07</td></tr>
+<tr><td>Test run time</td><td>2026-10-30T05:52:07</td></tr>
+</table>
+<h2>Diagnosis</h2>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Result</td><td>Inconclusive</td></tr>
+<tr><td>Confidence</td><td>Not applicable (Inconclusive)</td></tr>
+<tr><td>Rule used</td><td>C</td></tr>
+</table>
+<p>The measurements disagree, so the tool will not guess. The router did not answer any of 10 probes, but the external target replied to 20/20. The router may be ignoring ping, so a router fault cannot be confirmed.</p>
+<p>Confidence is a simple evidence-counting level. It is not a validated probability.</p>
+<h2>Supporting evidence</h2>
+<ul><li>Router (192.168.1.1): 0/10 replies, loss 100.0%, median n/a, jitter n/a</li><li>External target (1.1.1.1): 20/20 replies, loss 0.0%, median 28.6 ms, jitter 2.1 ms</li></ul>
+<h2>Why this confidence level</h2>
+<ul><li>Conflicting evidence: no cause can be named safely.</li></ul>
+<h2>Test settings</h2>
+<table><tr><th>Setting</th><th>Value</th></tr>
+<tr><td>Router address</td><td>192.168.1.1 (auto-detected)</td></tr>
+<tr><td>Router probes</td><td>10</td></tr>
+<tr><td>External target</td><td>1.1.1.1</td></tr>
+<tr><td>External probes (normal and busy link)</td><td>20</td></tr>
+<tr><td>Probe timeout / interval</td><td>1000 ms / 0.2 s</td></tr>
+<tr><td>DNS domains</td><td>google.com, wikipedia.org, cloudflare.com, github.com, python.org</td></tr>
+<tr><td>DNS method</td><td>simulated DNS server</td></tr>
+<tr><td>DNS timeout</td><td>2.0 s</td></tr>
+<tr><td>Busy-link test</td><td>on; 4 download threads</td></tr>
+</table>
+<h2>Measurements: ping tests</h2>
+<table><tr><th>Test</th><th>Target</th><th>Sent</th><th>Received</th><th>Loss %</th><th>Avg ms</th><th>Median ms</th><th>Jitter ms</th><th>Min / Max ms</th></tr>
+<tr><td>Router</td><td>192.168.1.1</td><td>10</td><td>0</td><td>100.0</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a / n/a</td></tr>
+<tr><td>External (normal)</td><td>1.1.1.1</td><td>20</td><td>20</td><td>0.0</td><td>28.3</td><td>28.6</td><td>2.1</td><td>24.4 / 31.3</td></tr>
+<tr><td>External (busy link)</td><td>1.1.1.1</td><td>20</td><td>20</td><td>0.0</td><td>30.4</td><td>31.0</td><td>2.8</td><td>23.1 / 33.6</td></tr>
+</table>
+<h2>Measurements: DNS lookups</h2>
+<p>DNS servers found: 192.168.1.1, 8.8.8.8. Server tested: 192.168.1.1.</p>
+<table><tr><th>Domain</th><th>Result</th><th>Time ms</th><th>Error</th></tr>
+<tr><td>google.com</td><td>OK</td><td>26.2</td><td></td></tr>
+<tr><td>wikipedia.org</td><td>OK</td><td>34.0</td><td></td></tr>
+<tr><td>cloudflare.com</td><td>OK</td><td>28.0</td><td></td></tr>
+<tr><td>github.com</td><td>OK</td><td>48.7</td><td></td></tr>
+<tr><td>python.org</td><td>OK</td><td>23.4</td><td></td></tr>
+</table>
+<h2>Network performance: normal vs busy link</h2>
+<p>Busy link created with 4 download threads for 12.0 s (38.0 MB downloaded; load applied: True). This compares changes in latency, jitter and loss. It is not a bandwidth test.</p>
+<table><tr><th>Metric</th><th>Unit</th><th>Normal</th><th>Busy link</th><th>Change</th></tr>
+<tr><td>Median latency</td><td>ms</td><td>28.6</td><td>31.0</td><td>2.4</td></tr>
+<tr><td>Jitter</td><td>ms</td><td>2.1</td><td>2.8</td><td>0.7</td></tr>
+<tr><td>Packet loss</td><td>%</td><td>0.0</td><td>0.0</td><td>0.0</td></tr>
+</table>
+<h2>Rules checked</h2>
+<table><tr><th>Rule</th><th>Name</th><th>State</th><th>Detail</th></tr>
+<tr><td>R0</td><td>Enough measurements available</td><td>not fired</td><td>3 of 3 core checks usable.</td></tr>
+<tr><td>R1</td><td>Router unreachable</td><td>FIRED</td><td>0/10 router replies.</td></tr>
+<tr><td>R2</td><td>DNS failure</td><td>not evaluated</td><td>Skipped: DNS failures are expected when the router is unreachable.</td></tr>
+<tr><td>R3</td><td>Slow DNS</td><td>not evaluated</td><td>No usable DNS result.</td></tr>
+<tr><td>R4</td><td>Packet loss</td><td>not evaluated</td><td>No usable ping data to compare.</td></tr>
+<tr><td>R5</td><td>High latency</td><td>not evaluated</td><td>No external latency available.</td></tr>
+<tr><td>R6</td><td>Congestion hint (busy link)</td><td>not evaluated</td><td>No usable baseline.</td></tr>
+<tr><td>C</td><td>Conflicting evidence</td><td>CONFLICT</td><td>The router did not answer any of 10 probes, but the external target replied to 20/20. The router may be ignoring ping, so a router fault cannot be confirmed.</td></tr>
+</table>
+<h2>Suggested additional tests</h2>
+<ul><li>Ping a second external target (for example 8.8.8.8) and compare.</li><li>Ping the router from another device.</li><li>Repeat the full diagnosis a few minutes later.</li><li>Check whether the router/target blocks ping (ICMP).</li></ul>
+<h2>Notes</h2>
+<ul><li>SIMULATED data produced by the lab simulator. These are not real network measurements.</li></ul>
+<h2>Decision limits used (proposed, not validated)</h2>
+<table><tr><th>Limit</th><th>Value</th></tr>
+<tr><td>min_router_probes</td><td>5</td></tr>
+<tr><td>min_probes_reliable</td><td>10</td></tr>
+<tr><td>min_dns_lookups</td><td>2</td></tr>
+<tr><td>min_lost_packets</td><td>2</td></tr>
+<tr><td>loss_warn_pct</td><td>10.0</td></tr>
+<tr><td>dns_fail_ratio</td><td>0.5</td></tr>
+<tr><td>dns_slow_ms</td><td>300.0</td></tr>
+<tr><td>latency_high_ms</td><td>150.0</td></tr>
+<tr><td>congestion_latency_ratio</td><td>2.0</td></tr>
+<tr><td>congestion_latency_abs_ms</td><td>30.0</td></tr>
+<tr><td>congestion_jitter_ratio</td><td>2.0</td></tr>
+<tr><td>congestion_jitter_abs_ms</td><td>10.0</td></tr>
+<tr><td>congestion_loss_increase_pct</td><td>3.0</td></tr>
+</table>
+<h2>Limitations</h2>
+<ul><li>Decision limits are proposed values that must still be tested and tuned; they are not validated.</li><li>Confidence levels are simple evidence-counting rules, not statistically validated probabilities.</li><li>A symptom is a hint, not proof. The tool does not prove a damaged cable, causes inside the ISP network, or Wi-Fi interference (no radio data).</li><li>Ping loss covers both directions (request and reply), so it is not the one-way loss of RFC 7680.</li><li>Some routers and servers slow down or ignore ping (ICMP), which can look like loss or an unreachable device.</li><li>The busy-link test creates download load only, and only shows how latency, jitter and loss change. It is not a bandwidth test.</li></ul>
+</body></html>

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Streamlit secrets (never commit)
+.streamlit/secrets.toml
+
+# Reports you generate while testing (kept out of Git). Sample reports are kept.
+reports/*
+!reports/.gitkeep
+!reports/SAMPLE_*
+
+# Python environment and cache
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
