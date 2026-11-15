@@ -74,17 +74,21 @@ with st.sidebar:
     else:
         st.caption("Live mode tests the network of the computer running this app (takes about a minute).")
 
-    with st.expander("Advanced test settings", expanded=False):
+    with st.expander("Advanced test settings", expanded=False):       
         router_probes = st.slider("Router probes", 5, 30, 10, key="router_probes")
         external_probes = st.slider("External probes", 10, 60, 20, key="external_probes")
-        external_target = st.text_input("External target (IP)", "1.1.1.1", key="external_target")
-        gateway_override = st.text_input("Router address (blank = auto-detect)", "", key="gateway_override")
-        domains_text = st.text_area("Domains to resolve (one per line)", "\n".join(DEFAULT_DOMAINS), key="domains")
-        dns_method = st.selectbox("DNS method", ["auto", "system"], key="dns_method",
+        external_targets = st.text_area(
+            "External targets (one IP per line)",
+            "1.1.1.1\n8.8.8.8\n9.9.9.9",
+            key="external_targets"
+        )
+    gateway_override = st.text_input("Router address (blank = auto-detect)", "", key="gateway_override")
+    domains_text = st.text_area("Domains to resolve (one per line)", "\n".join(DEFAULT_DOMAINS), key="domains")
+    dns_method = st.selectbox("DNS method", ["auto", "system"], key="dns_method",
                                   help="auto = ask the detected DNS server directly; system = use the operating-system resolver.")
-        run_load = st.checkbox("Run busy-link (load) test", True, key="run_load")
-        load_threads = st.slider("Download threads for load", 1, 8, 4, key="load_threads")
-        load_url = st.text_input("Load download URL", DEFAULT_LOAD_URL, key="load_url")
+    run_load = st.checkbox("Run busy-link (load) test", True, key="run_load")
+    load_threads = st.slider("Download threads for load", 1, 8, 4, key="load_threads")
+    load_url = st.text_input("Load download URL", DEFAULT_LOAD_URL, key="load_url")
 
     with st.expander("Decision limits (advanced)", expanded=False):
         st.caption("Starting values we picked; they still need tuning. Change one and the diagnosis updates instantly.")
@@ -98,7 +102,9 @@ with st.sidebar:
         )
 
 settings = TestSettings(
-    router_probes=router_probes, external_probes=external_probes, external_target=external_target.strip() or "1.1.1.1",
+   router_probes=router_probes,
+external_probes=external_probes,
+external_targets=[x.strip() for x in external_targets.splitlines() if x.strip()] or ["1.1.1.1", "8.8.8.8", "9.9.9.9"],
     domains=[d.strip() for d in domains_text.splitlines() if d.strip()] or list(DEFAULT_DOMAINS),
     dns_method=dns_method, run_load_test=run_load, load_threads=load_threads,
     load_url=load_url.strip() or DEFAULT_LOAD_URL, gateway_override=gateway_override.strip(),
@@ -283,6 +289,16 @@ tab_e, tab_m, tab_p, tab_r = st.tabs(["Why this answer", "Raw measurements", "No
 with tab_m:
     st.dataframe(probe_table([("Router", r), ("External (normal)", e), ("External (busy link)", bundle.external_loaded)]),
                  width="stretch", hide_index=True)
+    if bundle.external_target_results:
+        st.subheader("External target results")
+        st.dataframe(
+                probe_table([
+                    (f"External target {i + 1}", result)
+                    for i, result in enumerate(bundle.external_target_results)
+                ]),
+                width="stretch",
+                hide_index=True
+            )
     if e is not None and e.available:
         st.caption("Packet loss details (sent / received / lost):")
         st.dataframe(pd.DataFrame([loss_summary(s) for s in (r, e) if s is not None and s.available]),
