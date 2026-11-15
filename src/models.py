@@ -32,6 +32,7 @@ class TestSettings:
     router_probes: int = 10
     external_probes: int = 20
     external_target: str = "1.1.1.1"
+    external_targets: List[str] = field(default_factory=lambda: ["1.1.1.1", "8.8.8.8", "9.9.9.9"])
     domains: List[str] = field(default_factory=lambda: list(DEFAULT_DOMAINS))
     dns_method: str = "auto"  # "auto" = ask detected DNS server directly, "system" = OS resolver
     dns_timeout_s: float = 2.0
@@ -138,6 +139,7 @@ class EvidenceBundle:
     router: Optional[ProbeStats] = None
     dns: Optional[DnsResult] = None
     external_baseline: Optional[ProbeStats] = None
+    external_target_results: List[ProbeStats] = field(default_factory=list)
     external_loaded: Optional[ProbeStats] = None
     load: Optional[LoadInfo] = None
     notes: List[str] = field(default_factory=list)

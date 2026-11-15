@@ -52,15 +52,39 @@ def run_live_diagnosis(
     if bundle.dns.method.startswith("operating-system"):
         bundle.notes.append("DNS was tested with the operating-system resolver, which may answer from its cache.")
 
-    # Step 5: latency + loss (normal conditions)
-    report(0.35, "Step 3/5: Measuring delay and packet loss (normal conditions)...")
-    bundle.external_baseline = measure_latency(
-        settings.external_target, count=settings.external_probes, timeout_ms=settings.ping_timeout_ms,
-        interval_s=settings.probe_interval_s, role="external", ping_fn=ping_fn,
-        progress=lambda i, n: report(0.35 + 0.25 * i / n, f"Step 3/5: Ping {i}/{n} to {settings.external_target}..."))
-    if not bundle.external_baseline.available:
-        bundle.notes.append(f"External ping unavailable: {bundle.external_baseline.error}")
+        # Step 5: latency + loss (normal conditions)
+    targets = settings.external_targets or [settings.external_target]
+    targets = list(dict.fromkeys(x.strip() for x in targets if x.strip()))
+    if not targets:
+        targets = ["1.1.1.1"]
 
+    bundle.external_target_results = []
+    target_count = len(targets)
+
+    report(0.35, "Step 3/5: Measuring delay and packet loss across targets...")
+
+    for index, target in enumerate(targets):
+        start = 0.35 + 0.25 * index / target_count
+        end = 0.35 + 0.25 * (index + 1) / target_count
+
+        result = measure_latency(
+            target, count=settings.external_probes, timeout_ms=settings.ping_timeout_ms,
+            interval_s=settings.probe_interval_s, role="external", ping_fn=ping_fn,
+            progress=lambda i, n, target=target, start=start, end=end: report(
+                start + (end - start) * i / n,
+                f"Step 3/5: Ping {i}/{n} to {target}..."
+            )
+        )
+        bundle.external_target_results.append(result)
+
+    bundle.external_baseline = bundle.external_target_results[0]
+
+    for result in bundle.external_target_results:
+        if not result.available:
+            bundle.notes.append(
+                f"External ping unavailable for {result.target}: {result.error}"
+            )
+        
     # Step 6: busy-link comparison
     if settings.run_load_test and bundle.external_baseline.available and bundle.external_baseline.received > 0:
         report(0.60, "Step 4/5: Creating a controlled busy link and measuring again...")
