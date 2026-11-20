@@ -283,6 +283,196 @@ with t4:
         st.markdown(badge("Unavailable", "na"), unsafe_allow_html=True)
         st.metric("Loss", "n/a")
 
+# ------------------------------------------------------------------
+# Visual Connection Path
+st.markdown("### 🌐 Visual Connection Path")
+
+router_ok = r is not None and r.available
+dns_ok = d is not None and d.success_count == len(d.lookups) and len(d.lookups) > 0
+
+target_results = bundle.external_target_results or ([e] if e else [])
+targets_reached = sum(
+    1 for result in target_results
+    if result is not None and result.available and result.received > 0
+)
+internet_ok = targets_reached > 0
+
+def path_card(title, status, color, detail, emoji):
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(145deg, #ffffff, #f1f5f9);
+            border: 1px solid {color};
+            border-top: 4px solid {color};
+            border-radius: 14px;
+            padding: 18px 10px;
+            min-height: 145px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        ">
+            <div style="font-size:25px;">{emoji}</div>
+            <div style="font-size:16px;font-weight:700;color:#1e293b;margin:8px 0;">
+                {title}
+            </div>
+            <div style="font-size:14px;font-weight:700;color:{color};">
+                {status}
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:8px;">
+                {detail}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+c1, a1, c2, a2, c3, a3, c4 = st.columns(
+    [1, 0.18, 1, 0.18, 1, 0.18, 1]
+)
+
+with c1:
+    path_card("Your Device", "Test running", "#2563eb",
+              "Local device", "💻")
+
+with a1:
+    st.markdown("<div style='text-align:center;padding-top:48px;font-size:24px;color:#64748b;'>➜</div>",
+                unsafe_allow_html=True)
+
+with c2:
+    path_card("Router",
+              "Reachable" if router_ok else "Unavailable",
+              "#16a34a" if router_ok else "#dc2626",
+              str(bundle.gateway or "Not detected"), "📡")
+
+with a2:
+    st.markdown("<div style='text-align:center;padding-top:48px;font-size:24px;color:#64748b;'>➜</div>",
+                unsafe_allow_html=True)
+
+with c3:
+    path_card("ISP / Last Mile", "Not directly measured",
+              "#d97706",
+              "Needs ISP-side evidence", "🏢")
+
+with a3:
+    st.markdown("<div style='text-align:center;padding-top:48px;font-size:24px;color:#64748b;'>➜</div>",
+                unsafe_allow_html=True)
+
+with c4:
+    path_card("Public Internet",
+              f"{targets_reached}/{len(target_results)} targets reachable",
+              "#16a34a" if internet_ok else "#dc2626",
+              "External ping checks", "🌍")
+
+st.markdown("")
+
+dns_color = "#16a34a" if dns_ok else "#dc2626"
+dns_status = "All lookups working" if dns_ok else "Lookup issue detected"
+dns_detail = (
+    f"{d.success_count}/{len(d.lookups)} lookups successful"
+    if d else "Not tested"
+)
+
+path_card("DNS Resolution", dns_status, dns_color,
+          dns_detail, "🔎")
+
+st.markdown("")
+
+
+# Smart Bottleneck Detection
+st.markdown("### 🧠 Smart Bottleneck Detection")
+
+loss_issue = (
+    e is not None and e.available
+    and (e.loss_pct or 0) >= th.loss_warn_pct
+    and e.lost >= 2
+)
+
+latency_issue = (
+    e is not None and e.available
+    and e.avg_ms is not None and e.avg_ms > 100
+)
+
+jitter_issue = (
+    e is not None and e.available
+    and e.jitter_ms is not None and e.jitter_ms > 30
+)
+
+# Compare normal and busy-link measurements
+loaded = bundle.external_loaded
+
+congestion_latency = (
+    e is not None and loaded is not None
+    and e.median_ms is not None and loaded.median_ms is not None
+    and loaded.median_ms > e.median_ms * 2
+    and loaded.median_ms - e.median_ms >= 50
+)
+
+congestion_jitter = (
+    e is not None and loaded is not None
+    and e.jitter_ms is not None and loaded.jitter_ms is not None
+    and loaded.jitter_ms - e.jitter_ms >= 15
+)
+
+congestion_loss = (
+    e is not None and loaded is not None
+    and e.loss_pct is not None and loaded.loss_pct is not None
+    and loaded.loss_pct - e.loss_pct >= 2
+)
+
+congestion_detected = (
+    bundle.load is not None
+    and bundle.load.applied
+    and (congestion_latency or congestion_jitter or congestion_loss)
+)
+
+if not router_ok:
+    st.error(
+        "Possible local connectivity issue: Router is not reachable. "
+        "Check your Wi-Fi or LAN connection."
+    )
+elif not internet_ok:
+    st.warning(
+        "Possible upstream connectivity issue: No external targets responded. "
+        "ISP / last-mile fault is not confirmed."
+    )
+elif not dns_ok:
+    st.warning("Possible DNS issue: One or more DNS lookups failed.")
+elif congestion_detected:
+    st.warning("Busy-link congestion detected in the comparison measurements.")
+
+    if congestion_latency:
+        st.write(
+            f"🔴 Median latency increased from "
+            f"{e.median_ms:.1f} ms to {loaded.median_ms:.1f} ms."
+        )
+
+    if congestion_jitter:
+        st.write(
+            f"🟠 Jitter increased from "
+            f"{e.jitter_ms:.1f} ms to {loaded.jitter_ms:.1f} ms."
+        )
+
+    if congestion_loss:
+        st.write(
+            f"🔴 Packet loss increased from "
+            f"{e.loss_pct:.1f}% to {loaded.loss_pct:.1f}%."
+        )
+
+elif loss_issue or latency_issue or jitter_issue:
+    st.warning("Network quality issues detected.")
+
+    if loss_issue:
+        st.write(f"🔴 Packet loss: {e.loss_pct:.1f}%")
+    if latency_issue:
+        st.write(f"🟠 High average latency: {e.avg_ms:.1f} ms")
+    if jitter_issue:
+        st.write(f"🟠 High jitter: {e.jitter_ms:.1f} ms")
+
+else:
+    st.success(
+        "No major connectivity issue detected. "
+        "Router, external reachability, DNS and network quality look healthy."
+    )
+
 # ------------------------------------------------------------------ detail tabs
 tab_e, tab_m, tab_p, tab_r = st.tabs(["Why this answer", "Raw measurements", "Normal vs busy link", "Report preview"])
 
