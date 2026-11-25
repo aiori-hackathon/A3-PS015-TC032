@@ -15,7 +15,9 @@ from src.performance import compare_stats
 from src.report_generator import (generate_html_report, generate_markdown_report, report_filename,
                                   save_report)
 from src.simulator import SCENARIOS, simulate_scenario
-
+from src.history import calculate_historical_baseline
+from src.history import initialize_history, save_run
+initialize_history()
 MODE_LIVE = "Live measurement (real network)"
 MODE_SIM = "Lab simulator (simulated data)"
 
@@ -186,10 +188,12 @@ def plain_summary(d):
 if st.button("Start Diagnosis", type="primary", width="stretch", key="start"):
     if mode == MODE_SIM:
         st.session_state["bundle"] = simulate_scenario(scenario_key, seed, settings)
+        save_run(st.session_state["bundle"], diagnose(st.session_state["bundle"], th))
     else:
         bar = st.progress(0.0, text="Starting...")
         try:
             st.session_state["bundle"] = run_live_diagnosis(settings, progress=lambda f, m: bar.progress(f, text=m))
+            save_run(st.session_state["bundle"], diagnose(st.session_state["bundle"], th))
         except Exception as exc:  # keep the page usable if the network is blocked
             st.error(f"The live test could not finish ({exc}). Try the lab simulator, or check your network and firewall.")
         finally:
@@ -219,6 +223,37 @@ if bundle is None:
     st.stop()
 
 diag: Diagnosis = diagnose(bundle, th)
+historical = calculate_historical_baseline()
+
+st.markdown("### Historical Network Baseline")
+
+if historical["ready"]:
+    st.caption(
+        f"Based on {historical['sample_count']} saved real network test runs."
+    )
+
+    b1, b2, b3 = st.columns(3)
+
+    b1.metric(
+        "Typical Latency",
+        f"{historical['latency_ms']} ms"
+        if historical["latency_ms"] is not None else "N/A",
+    )
+    b2.metric(
+        "Typical Jitter",
+        f"{historical['jitter_ms']} ms"
+        if historical["jitter_ms"] is not None else "N/A",
+    )
+    b3.metric(
+        "Typical Packet Loss",
+        f"{historical['packet_loss_pct']}%"
+        if historical["packet_loss_pct"] is not None else "N/A",
+    )
+else:
+    st.info(
+        f"Historical baseline not ready. {historical['message']} "
+        "Only real network tests are counted; simulator runs are excluded."
+    )
 
 # ------------------------------------------------------------------ source banner
 if bundle.is_simulated:
