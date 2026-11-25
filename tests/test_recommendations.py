@@ -59,3 +59,26 @@ def test_diagnosis_is_preserved():
     result = generate_recommendations("DNS issue")
 
     assert result["diagnosis"] == "DNS issue"
+
+
+def test_scenario_rules_get_targeted_recommendations():
+    expected = {
+        "R1": "Router unreachable",
+        "R2": "DNS resolution failure",
+        "R3": "Slow DNS resolution",
+        "R4": "Packet loss",
+        "R5": "High latency",
+        "R6": "Congestion under load",
+        "R-IF": "Network interface disconnected",
+        "C": "Conflicting evidence — verify with another test",
+        "R0": "Insufficient measurements",
+    }
+    for rule, problem in expected.items():
+        result = generate_recommendations("Scenario diagnosis", diagnosis_rule=rule)
+        assert result["recommendations"][0]["problem"] == problem
+
+
+def test_dns_failure_does_not_fall_back_to_generic_healthy_advice():
+    result = generate_recommendations("DNS failure", diagnosis_rule="R2")
+    assert result["recommendations"][0]["problem"] == "DNS resolution failure"
+    assert "DNS" in result["recommendations"][0]["action"]

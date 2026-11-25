@@ -228,70 +228,75 @@ diag: Diagnosis = diagnose(bundle, th)
 historical = calculate_historical_baseline()
 # Network Health Score
 st.markdown("### Network Health Score")
+# For a congestion diagnosis, score the loaded measurements so the score reflects
+# the degraded experience. Otherwise use the normal external baseline.
+score_stats = bundle.external_loaded if diag.rule_id == "R6" and bundle.external_loaded else bundle.external_baseline
+health = calculate_health_score(
+    score_stats.median_ms if score_stats else None,
+    score_stats.jitter_ms if score_stats else None,
+    score_stats.loss_pct if score_stats else None,
+)
 
-if bundle.source == "real":
-    health = calculate_health_score(
-        bundle.external_baseline.median_ms,
-        bundle.external_baseline.jitter_ms,
-        bundle.external_baseline.loss_pct,
+if health["ready"]:
+    score_col, grade_col = st.columns([1, 2])
+    score_col.metric("Network Health Score", f'{health["score"]}/100')
+    grade_col.metric("Network Status", health["grade"])
+    h1, h2, h3 = st.columns(3)
+    h1.metric("Latency Score", health["breakdown"]["latency"])
+    h2.metric("Jitter Score", health["breakdown"]["jitter"])
+    h3.metric("Packet Loss Score", health["breakdown"]["packet_loss"])
+    st.caption(
+        health["message"] + (
+            " Score uses busy-link measurements because congestion was detected."
+            if diag.rule_id == "R6" else
+            " Score is based on external latency, jitter and packet loss."
+        )
+    )
+else:
+    st.info(
+        "A numeric health score is unavailable because the required external latency/jitter "
+        "measurements could not be collected. The diagnosis below explains the connectivity issue."
     )
 
-    if health["ready"]:
-        st.metric("Network Health Score", f'{health["score"]}/100')
-        st.subheader(f'Network Status: {health["grade"]}')
-
-        h1, h2, h3 = st.columns(3)
-        h1.metric("Latency Score", health["breakdown"]["latency"])
-        h2.metric("Jitter Score", health["breakdown"]["jitter"])
-        h3.metric("Packet Loss Score", health["breakdown"]["packet_loss"])
-
-        st.caption(health["message"])
-    else:
-        st.info(health["message"])
-else:
-    st.info("Network health score is available for live measurements.")
-# Personalized Network Anomaly Detection
+# Personalized anomaly detection intentionally uses REAL history only.
 st.markdown("### Personalized Network Anomaly Detection")
-# Smart Network Recommendations
-st.markdown("### Smart Network Recommendations")
-
-if bundle.source == "real":
-    recommendation_result = generate_recommendations(
-        diagnosis=diag.label,
-        latency_ms=bundle.external_baseline.median_ms,
-        jitter_ms=bundle.external_baseline.jitter_ms,
-        packet_loss_pct=bundle.external_baseline.loss_pct,
-    )
-
-    for item in recommendation_result["recommendations"]:
-        st.warning(f"**{item['problem']}**")
-        st.write(f"**Recommended action:** {item['action']}")
-        st.caption(f"Why: {item['reason']}")
-else:
-    st.info("Smart recommendations are available for live network measurements.")
-
 if bundle.source == "real" and historical["ready"]:
     current_metrics = {
         "latency_ms": bundle.external_baseline.median_ms,
         "jitter_ms": bundle.external_baseline.jitter_ms,
         "packet_loss_pct": bundle.external_baseline.loss_pct,
     }
-
-    anomaly_result = detect_network_anomalies(
-        current_metrics,
-        historical,
-    )
-
+    anomaly_result = detect_network_anomalies(current_metrics, historical)
     if anomaly_result["anomaly_detected"]:
         st.warning(anomaly_result["message"])
         for anomaly in anomaly_result["anomalies"]:
             st.write(f"⚠️ {anomaly['message']}")
     else:
         st.success(anomaly_result["message"])
+elif bundle.source == "simulated":
+    st.info("Personalized anomaly detection is reserved for real measurements. Simulated runs are not added to your historical baseline.")
 elif not historical["ready"]:
     st.info("Personalized anomaly detection will be available after 5 real network runs.")
 else:
-    st.info("Personalized anomaly detection is available for live network measurements.")
+    st.info("Personalized anomaly detection needs a valid real historical baseline.")
+
+# Smart Network Recommendations
+st.markdown("### Smart Network Recommendations")
+recommendation_stats = score_stats
+recommendation_result = generate_recommendations(
+    diagnosis=diag.label,
+    diagnosis_rule=diag.rule_id,
+    latency_ms=recommendation_stats.median_ms if recommendation_stats else None,
+    jitter_ms=recommendation_stats.jitter_ms if recommendation_stats else None,
+    packet_loss_pct=recommendation_stats.loss_pct if recommendation_stats else None,
+)
+if bundle.source == "simulated":
+    st.caption("Recommendations below are generated from the selected simulated scenario.")
+for item in recommendation_result["recommendations"]:
+    st.warning(f"**{item['problem']}**")
+    st.write(f"**Recommended action:** {item['action']}")
+    st.caption(f"Why: {item['reason']}")
+
 st.markdown("### Historical Network Baseline")
 
 if historical["ready"]:
