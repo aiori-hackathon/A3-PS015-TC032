@@ -4,7 +4,7 @@ Run with:   streamlit run app.py
 """
 import pandas as pd
 import streamlit as st
-
+from src.health_score import calculate_health_score
 from src import project_info as info
 from src.charts import ORANGE, comparison_chart, rtt_chart
 from src.diagnosis import Diagnosis, Thresholds, diagnose
@@ -225,6 +225,30 @@ if bundle is None:
 
 diag: Diagnosis = diagnose(bundle, th)
 historical = calculate_historical_baseline()
+# Network Health Score
+st.markdown("### Network Health Score")
+
+if bundle.source == "real":
+    health = calculate_health_score(
+        bundle.external_baseline.median_ms,
+        bundle.external_baseline.jitter_ms,
+        bundle.external_baseline.loss_pct,
+    )
+
+    if health["ready"]:
+        st.metric("Network Health Score", f'{health["score"]}/100')
+        st.subheader(f'Network Status: {health["grade"]}')
+
+        h1, h2, h3 = st.columns(3)
+        h1.metric("Latency Score", health["breakdown"]["latency"])
+        h2.metric("Jitter Score", health["breakdown"]["jitter"])
+        h3.metric("Packet Loss Score", health["breakdown"]["packet_loss"])
+
+        st.caption(health["message"])
+    else:
+        st.info(health["message"])
+else:
+    st.info("Network health score is available for live measurements.")
 # Personalized Network Anomaly Detection
 st.markdown("### Personalized Network Anomaly Detection")
 
