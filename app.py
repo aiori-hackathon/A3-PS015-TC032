@@ -15,8 +15,9 @@ from src.performance import compare_stats
 from src.report_generator import (generate_html_report, generate_markdown_report, report_filename,
                                   save_report)
 from src.simulator import SCENARIOS, simulate_scenario
-from src.history import calculate_historical_baseline
+
 from src.history import calculate_historical_baseline, get_history, initialize_history, save_run
+from src.anomaly import detect_network_anomalies
 initialize_history()
 MODE_LIVE = "Live measurement (real network)"
 MODE_SIM = "Lab simulator (simulated data)"
@@ -224,7 +225,31 @@ if bundle is None:
 
 diag: Diagnosis = diagnose(bundle, th)
 historical = calculate_historical_baseline()
+# Personalized Network Anomaly Detection
+st.markdown("### Personalized Network Anomaly Detection")
 
+if bundle.source == "real" and historical["ready"]:
+    current_metrics = {
+        "latency_ms": bundle.external_baseline.median_ms,
+        "jitter_ms": bundle.external_baseline.jitter_ms,
+        "packet_loss_pct": bundle.external_baseline.loss_pct,
+    }
+
+    anomaly_result = detect_network_anomalies(
+        current_metrics,
+        historical,
+    )
+
+    if anomaly_result["anomaly_detected"]:
+        st.warning(anomaly_result["message"])
+        for anomaly in anomaly_result["anomalies"]:
+            st.write(f"⚠️ {anomaly['message']}")
+    else:
+        st.success(anomaly_result["message"])
+elif not historical["ready"]:
+    st.info("Personalized anomaly detection will be available after 5 real network runs.")
+else:
+    st.info("Personalized anomaly detection is available for live network measurements.")
 st.markdown("### Historical Network Baseline")
 
 if historical["ready"]:
