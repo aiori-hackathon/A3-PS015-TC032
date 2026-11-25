@@ -6,7 +6,7 @@
 |---|---|
 | Team | Divya PR, Sartaj S |
 | College mentor | Neethu Mariam Panicker |
-| Repository | https://github.com/divyapr-27/A3-PS015-TC032 |
+| Repository | https://github.com/aiori-hackathon/A3-PS015-TC032 |
 | Live demo | https://youtu.be/qilcN_MvZMw?si=ic9kRI4UaPkU4kxY |
 | Original proposal | [`docs/proposal/Proposed-structure-hackathon.pdf`](docs/proposal/Proposed-structure-hackathon.pdf) |
 
@@ -29,26 +29,36 @@ missing or contradicts itself, it says **Inconclusive** instead of making someth
 
 ## What it can do
 
-| Feature | Where |
-|---|---|
-| Find the router (default gateway) and check it repeatedly | `src/router_check.py` |
-| DNS success, lookup time and DNS server info | `src/dns_check.py` |
-| Latency: average, median, min/max, standard deviation, jitter | `src/latency_check.py` |
-| Packet loss with sent/received counts | `src/packet_loss.py` |
-| Normal vs busy-link comparison (not a bandwidth test) | `src/performance.py` |
-| Rule-based diagnosis with evidence, rules table and confidence | `src/diagnosis.py` |
-| "Inconclusive" result with suggested extra tests | `src/diagnosis.py` |
-| Downloadable reports (HTML and Markdown) | `src/report_generator.py` |
-| Lab simulator for the six required cases (always labelled SIMULATED) | `src/simulator.py` |
-| Streamlit dashboard with status badges and charts | `app.py` |
+| Feature | Description | Location |
+|---|---|---|
+| Router connectivity | Detects and checks the default gateway | `src/router_check.py` |
+| DNS diagnostics | DNS resolution, lookup time and DNS server information | `src/dns_check.py` |
+| Latency analysis | Average, median, min/max, standard deviation and jitter | `src/latency_check.py` |
+| Packet loss detection | Sent/received packet counts and loss percentage | `src/packet_loss.py` |
+| Busy-link comparison | Compares network performance under normal and loaded conditions | `src/performance.py` |
+| Explainable diagnosis | Rule-based diagnosis with evidence and confidence explanations | `src/diagnosis.py` |
+| Historical baseline | Learns typical network performance from real measurements | `src/history.py` |
+| Network history dashboard | Displays previous measurements and performance trends | `app.py` |
+| Personalized anomaly detection | Detects unusual latency, jitter and packet loss against historical baselines | `src/anomaly.py` |
+| Network health score | Calculates a weighted score from 0–100 with metric breakdown | `src/health_score.py` |
+| Smart recommendations | Suggests troubleshooting actions with explanations | `src/recommendations.py` |
+| Downloadable reports | Generates HTML and Markdown reports | `src/report_generator.py` |
+| Lab simulator | Demonstrates network scenarios using clearly labelled simulated data | `src/simulator.py` |
+
 
 ## Where things stand
 
-* Everything above is built and covered by automated tests (106 passing).
-* Those tests use sample data, fake network functions and the simulator. Details: [`docs/test_results.md`](docs/test_results.md).
-* **Real lab fault-injection testing has not been done yet.** The plan is in [`docs/test_plan.md`](docs/test_plan.md).
-* The decision limits are starting values that still need tuning, and the confidence levels are simple counting rules, not validated probabilities.
-* Screenshots still need to be captured from the running app (see [`screenshots/README.md`](screenshots/README.md)).
+
+- Historical baseline learning from real network measurements.
+- Network history dashboard with performance trends.
+- Personalized network anomaly detection.
+- Network health score with metric-wise breakdown.
+- Smart troubleshooting recommendations with explanations.
+- Automated test suite: **133 tests passed** in the latest verified run.
+- Real lab fault-injection testing has not been completed yet. See `docs/test_plan.md`.
+- Health scores and anomaly thresholds are heuristic starting values and need further tuning.
+- Confidence levels use simple evidence counting, not validated probabilities.
+- Live measurements depend on the network and permissions of the computer running the app.
 
 ## Install and run (Windows)
 
@@ -69,13 +79,18 @@ If activation is blocked, run `Set-ExecutionPolicy -Scope Process -ExecutionPoli
 The browser opens at http://localhost:8501.
 
 ### Using the dashboard
-1. **Start with the lab simulator** (selected by default). Pick a scenario in the sidebar and press **Start Diagnosis**.
-2. For a real test choose *Live measurement (real network)* and press **Start Diagnosis** (about 1 minute). It measures the network of the computer running the app.
-3. Read the plain-words summary, the confidence level and the **Why this answer** tab. Change the decision limits in the sidebar to see the answer change.
-4. Press **Download Report** (HTML or Markdown).
 
-Windows may ask whether Python can use the network, allow it. If auto-detection of the router fails (for example on a non-English Windows),
-type the router address in the sidebar.
+
+1. **Start with the lab simulator:** Select a scenario and press **Start Diagnosis**. Simulated results are clearly labelled.
+2. **Run a live measurement:** Select *Live measurement (real network)* and press **Start Diagnosis**. This measures the network of the computer running the app.
+3. **Review the diagnosis:** Read the plain-language summary, supporting evidence, confidence explanation and suggested next steps.
+4. **Check network history:** Review previous real measurements and historical performance trends.
+5. **Review anomaly alerts:** Once at least 5 real measurements are available, compare current network performance against the historical baseline.
+6. **Check network health:** View the 0–100 health score and latency, jitter and packet-loss breakdown.
+7. **Follow smart recommendations:** Review suggested troubleshooting actions and explanations.
+8. **Download reports:** Export the diagnosis as HTML or Markdown.
+
+**Note:** Health scores and anomaly detection use heuristic thresholds. They are not validated predictions or guarantees of network performance.
 
 ## Run the tests
 
@@ -88,20 +103,37 @@ python scripts/make_sample_report.py dns_failure   # writes a SAMPLE report to r
 
 ## Project structure
 
-```
+
+```text
 A3-PS015-TC032/
-|-- app.py                  Streamlit dashboard
-|-- requirements.txt        Python packages
-|-- packages.txt            System package for Streamlit Cloud (ping)
-|-- run_app.bat, run_tests.bat
-|-- src/                    router_check, dns_check, latency_check, packet_loss, performance,
-|                           diagnosis, report_generator, simulator, orchestrator, charts, models
-|-- tests/                  test_router, test_dns, test_diagnosis, test_scenarios, test_app_smoke
-|-- docs/                   architecture, data_flow, test_plan, traceability, test_results, github_submission, proposal/
-|-- reports/                generated reports (SAMPLE_* files are simulated examples)
-|-- screenshots/            real screenshots go here
-|-- scripts/                helper scripts
+|-- app.py
+|-- requirements.txt
+|-- packages.txt
+|-- run_app.bat
+|-- run_tests.bat
+|-- src/
+|   |-- router_check.py
+|   |-- dns_check.py
+|   |-- latency_check.py
+|   |-- packet_loss.py
+|   |-- performance.py
+|   |-- diagnosis.py
+|   |-- history.py
+|   |-- anomaly.py
+|   |-- health_score.py
+|   |-- recommendations.py
+|   |-- report_generator.py
+|   |-- simulator.py
+|   |-- orchestrator.py
+|   |-- charts.py
+|   |-- models.py
+|-- tests/
+|-- docs/
+|-- reports/
+|-- screenshots/
+|-- scripts/
 ```
+
 
 ## How a diagnosis is made
 
