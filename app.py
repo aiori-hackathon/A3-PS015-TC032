@@ -16,7 +16,7 @@ from src.report_generator import (generate_html_report, generate_markdown_report
                                   save_report)
 from src.simulator import SCENARIOS, simulate_scenario
 from src.history import calculate_historical_baseline
-from src.history import initialize_history, save_run
+from src.history import calculate_historical_baseline, get_history, initialize_history, save_run
 initialize_history()
 MODE_LIVE = "Live measurement (real network)"
 MODE_SIM = "Lab simulator (simulated data)"
@@ -507,7 +507,53 @@ else:
         "No major connectivity issue detected. "
         "Router, external reachability, DNS and network quality look healthy."
     )
+st.markdown("## Network History Dashboard")
 
+history_runs = get_history(limit=20)
+
+if history_runs:
+    st.caption(f"Showing {len(history_runs)} recent diagnosis runs.")
+
+    history_rows = []
+
+    for run in history_runs:
+        evidence = run.get("evidence", {})
+        stats = evidence.get("external_baseline") or {}
+
+        history_rows.append({
+            "Date": run.get("timestamp", ""),
+            "Source": run.get("source", ""),
+            "Scenario": run.get("scenario", ""),
+            "Diagnosis": run.get("diagnosis_label") or "N/A",
+            "Latency (ms)": stats.get("median_ms"),
+            "Jitter (ms)": stats.get("jitter_ms"),
+            "Packet Loss (%)": stats.get("loss_pct"),
+        })
+    history_rows.reverse()
+
+    st.markdown("### Network Performance Trends")
+
+    trend_data = pd.DataFrame(history_rows)
+
+    trend_data["Date"] = pd.to_datetime(trend_data["Date"])
+
+    trend_data = trend_data.dropna(subset=["Latency (ms)"])
+
+    if not trend_data.empty:
+        st.line_chart(
+            trend_data.set_index("Date")[
+                ["Latency (ms)", "Jitter (ms)"]
+            ]
+        )
+
+        st.line_chart(
+            trend_data.set_index("Date")[["Packet Loss (%)"]]
+        )
+    else:
+        st.info("Not enough measurement data to show trends.")
+    st.dataframe(history_rows, width="stretch")
+else:
+    st.info("No diagnosis history available yet.")
 # ------------------------------------------------------------------ detail tabs
 tab_e, tab_m, tab_p, tab_r = st.tabs(["Why this answer", "Raw measurements", "Normal vs busy link", "Report preview"])
 
