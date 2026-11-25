@@ -8,8 +8,7 @@ from .dns_check import check_dns
 from .latency_check import measure_latency
 from .models import SOURCE_REAL, EvidenceBundle, TestSettings
 from .performance import measure_loaded
-from .router_check import check_router
-
+from .router_check import check_router, get_network_interface_status
 ProgressFn = Callable[[float, str], None]
 
 
@@ -32,7 +31,8 @@ def run_live_diagnosis(
 
     bundle = EvidenceBundle(source=SOURCE_REAL, scenario="live", settings=settings,
                             platform=f"{platform.system()} {platform.release()}")
-
+    # Capture network interface connectivity evidence
+    bundle.network_interface = get_network_interface_status()
     # Steps 2-3: router
     report(0.02, "Step 1/5: Finding the router (default gateway)...")
     kwargs = {"detector": gateway_detector} if gateway_detector else {}
@@ -105,3 +105,4 @@ def run_live_diagnosis(
 
     report(0.97, "Step 5/5: Applying the decision rules...")
     return bundle
+

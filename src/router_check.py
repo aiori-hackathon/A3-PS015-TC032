@@ -55,6 +55,55 @@ def parse_macos_gateway(text: str) -> Optional[str]:
     return match.group(1) if match else None
 
 
+def get_network_interface_status(
+    system: Optional[str] = None,
+    runner: Callable[[List[str]], str] = run_command,
+) -> dict:
+    """Return basic network-interface connectivity evidence."""
+    system = system or platform.system()
+
+    if system == "Windows":
+        output = runner(["ipconfig"])
+        adapter_states = []
+
+        for block in re.split(r"\n(?=(?:Wireless LAN|Ethernet) adapter )", output):
+            if not re.search(r"(?:Wireless LAN|Ethernet) adapter ", block):
+                continue
+
+            name_match = re.search(
+                r"(?:Wireless LAN|Ethernet) adapter ([^:\r\n]+):", block
+            )
+            if not name_match:
+                continue
+
+            name = name_match.group(1).strip()
+            disconnected = "Media disconnected" in block
+            has_ipv4 = bool(re.search(
+                r"IPv4 Address[.\s]*:\s*(?!0\.0\.0\.0)(\d+\.\d+\.\d+\.\d+)",
+                block
+            ))
+
+            adapter_states.append({
+                "name": name,
+                "connected": has_ipv4 and not disconnected,
+            })
+
+        connected = [x["name"] for x in adapter_states if x["connected"]]
+
+        return {
+            "available": bool(adapter_states),
+            "connected": bool(connected),
+            "active_interfaces": connected,
+            "interfaces": adapter_states,
+        }
+
+    return {
+        "available": False,
+        "connected": None,
+        "active_interfaces": [],
+        "interfaces": [],
+    }
+
 def get_default_gateway(system: Optional[str] = None, runner: Callable[[List[str]], str] = run_command) -> Optional[str]:
     """Return the default gateway (usually the home router) or None if not found."""
     system = system or platform.system()
