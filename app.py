@@ -4,6 +4,7 @@ Run with:   streamlit run app.py
 """
 import pandas as pd
 import streamlit as st
+from src.recommendations import generate_recommendations
 from src.health_score import calculate_health_score
 from src import project_info as info
 from src.charts import ORANGE, comparison_chart, rtt_chart
@@ -251,6 +252,23 @@ else:
     st.info("Network health score is available for live measurements.")
 # Personalized Network Anomaly Detection
 st.markdown("### Personalized Network Anomaly Detection")
+# Smart Network Recommendations
+st.markdown("### Smart Network Recommendations")
+
+if bundle.source == "real":
+    recommendation_result = generate_recommendations(
+        diagnosis=diag.label,
+        latency_ms=bundle.external_baseline.median_ms,
+        jitter_ms=bundle.external_baseline.jitter_ms,
+        packet_loss_pct=bundle.external_baseline.loss_pct,
+    )
+
+    for item in recommendation_result["recommendations"]:
+        st.warning(f"**{item['problem']}**")
+        st.write(f"**Recommended action:** {item['action']}")
+        st.caption(f"Why: {item['reason']}")
+else:
+    st.info("Smart recommendations are available for live network measurements.")
 
 if bundle.source == "real" and historical["ready"]:
     current_metrics = {
