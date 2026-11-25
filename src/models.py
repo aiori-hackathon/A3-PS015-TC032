@@ -136,6 +136,7 @@ class EvidenceBundle:
     scenario: str = ""
     settings: TestSettings = field(default_factory=TestSettings)
     gateway: Optional[str] = None
+    network_interface: Dict[str, Any] = field(default_factory=dict)
     router: Optional[ProbeStats] = None
     dns: Optional[DnsResult] = None
     external_baseline: Optional[ProbeStats] = None

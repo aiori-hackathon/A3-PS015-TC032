@@ -1,7 +1,13 @@
 """Tests for router detection and the router reachability check (no real network used)."""
 from src.latency_check import (build_ping_command, parse_ping_output, summarise, validate_host)
-from src.router_check import (check_router, get_default_gateway, parse_ipconfig_gateway,
-                              parse_linux_gateway, parse_macos_gateway)
+from src.router_check import (
+    check_router,
+    get_default_gateway,
+    get_network_interface_status,
+    parse_ipconfig_gateway,
+    parse_linux_gateway,
+    parse_macos_gateway,
+)
 import pytest
 
 WINDOWS_IPCONFIG = """
@@ -39,6 +45,35 @@ def test_get_default_gateway_uses_runner():
     assert get_default_gateway("Windows", runner=lambda cmd: WINDOWS_IPCONFIG) == "192.168.29.1"
     assert get_default_gateway("Linux", runner=lambda cmd: "default via 10.1.1.1 dev eth0") == "10.1.1.1"
 
+
+def test_network_interface_status_with_connected_wifi():
+    status = get_network_interface_status(
+        "Windows",
+        runner=lambda cmd: WINDOWS_IPCONFIG
+    )
+
+    assert status["available"] is True
+    assert status["connected"] is True
+    assert "Wi-Fi" in status["active_interfaces"]
+
+
+def test_network_interface_status_when_all_adapters_disconnected():
+    output = """
+Ethernet adapter Ethernet:
+   Media State . . . . . . . . . . . : Media disconnected
+
+Wireless LAN adapter Wi-Fi:
+   Media State . . . . . . . . . . . : Media disconnected
+"""
+
+    status = get_network_interface_status(
+        "Windows",
+        runner=lambda cmd: output
+    )
+
+    assert status["available"] is True
+    assert status["connected"] is False
+    assert status["active_interfaces"] == []
 
 def test_check_router_reachable():
     gw, stats = check_router("192.168.1.1", count=6, interval_s=0, ping_fn=lambda h, t: 2.0)
