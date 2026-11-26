@@ -4,6 +4,7 @@ Run with:   streamlit run app.py
 """
 import pandas as pd
 import streamlit as st
+import plotly.io as pio
 from src.recommendations import generate_recommendations
 from src.health_score import calculate_health_score
 from src import project_info as info
@@ -23,50 +24,509 @@ initialize_history()
 MODE_LIVE = "Live measurement (real network)"
 MODE_SIM = "Lab simulator (simulated data)"
 
-st.set_page_config(page_title=f"{info.TEAM_CODE} | Connectivity Diagnosis", page_icon="📡", layout="wide")
+st.set_page_config(
+    page_title="NetPulse | Network Intelligence",
+    page_icon="📡",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
+pio.templates.default = "plotly_dark"
 st.markdown(
     """
 <style>
-.block-container {padding-top: 1.6rem; max-width: 1200px;}
-.hero {background: linear-gradient(120deg, #0f766e 0%, #115e59 100%); color: #fff; padding: 22px 28px;
-       border-radius: 14px; margin-bottom: 16px;}
-.hero h1 {color: #fff; font-size: 1.8rem; margin: 0 0 4px 0; padding: 0;}
-.hero p {margin: 2px 0; color: #d5f2ee; font-size: 0.98rem;}
-.badge {display:inline-block; padding: 2px 11px; border-radius: 999px; font-weight: 600; font-size: 0.85rem;}
-.ok {background:#dcfce7; color:#166534;} .bad {background:#fee2e2; color:#991b1b;}
-.warn {background:#fef3c7; color:#92400e;} .na {background:#e5e7eb; color:#4b5563;}
-.diag {border-left: 8px solid; padding: 16px 20px; border-radius: 10px; margin: 10px 0;}
-.diag h2 {margin: 0 0 6px 0; font-size: 1.55rem;}
-.diag-fault {border-color:#dc2626; background:#fef2f2;} .diag-normal {border-color:#16a34a; background:#f0fdf4;}
-.diag-inconclusive {border-color:#d97706; background:#fffbeb;}
-.plain {background:#ffffff; border:1px solid #d6ddd6; border-radius:10px; padding:12px 18px; margin: 8px 0 12px 0;}
-.plain b {color:#0f766e;}
-.src-sim {background:#fef3c7; border:1px solid #e5b84a; padding:9px 14px; border-radius:10px;}
-.src-real {background:#dcfce7; border:1px solid #86c99a; padding:9px 14px; border-radius:10px;}
-.step {background:#ffffff; border:1px solid #d6ddd6; border-radius:12px; padding:14px 16px; height:100%;}
-.step .n {display:inline-block; width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%;
-          background:#0f766e; color:#fff; font-weight:700; margin-bottom:6px;}
-.foot {color:#6b7280; font-size:0.85rem; margin-top:26px; text-align:center;}
+/* NetPulse - Dark Professional Theme */
+
+.stApp {
+    background: linear-gradient(135deg, #081321, #0d1b2e, #101f35);
+    color: #e6edf7;
+}
+
+.block-container {
+    padding-top: 1.5rem;
+    max-width: 1450px;
+}
+
+[data-testid="stSidebar"] {
+    background: #0b1728;
+    border-right: 1px solid #203b59;
+}
+
+[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #142b45, #102139);
+    border: 1px solid #244767;
+    padding: 18px;
+    border-radius: 13px;
+    box-shadow: 0 4px 18px rgba(0, 150, 255, 0.08);
+}
+
+[data-testid="stMetricValue"] {
+    color: #38cfff;
+}
+
+.hero {
+    background: linear-gradient(110deg, #102c4b, #124b70, #12375c);
+    border: 1px solid #2879a8;
+    color: white;
+    padding: 25px 28px;
+    border-radius: 16px;
+    margin-bottom: 22px;
+    box-shadow: 0 5px 25px rgba(0, 180, 255, 0.12);
+}
+
+.hero h1 {
+    color: white;
+    font-size: 1.9rem;
+    margin: 0 0 8px 0;
+}
+
+.hero p {
+    color: #b8d9ef;
+    font-size: 1rem;
+}
+
+h1, h2, h3 {
+    color: #e6f3ff;
+}
+
+.stTabs [data-baseweb="tab"] {
+    color: #b8cce0;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #38cfff;
+    border-bottom-color: #38cfff;
+}
+
+.stButton > button {
+    background: linear-gradient(100deg, #087eae, #1766b4);
+    color: white;
+    border: 1px solid #38cfff;
+    border-radius: 9px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.stButton > button:hover {
+    background: #159bd0;
+    border-color: #75e1ff;
+}
+
+.step, .plain {
+    background: #14263b;
+    border: 1px solid #294866;
+    border-radius: 12px;
+    padding: 16px;
+    color: #e6edf7;
+}
+
+.step .n {
+    background: #087eae;
+    color: white;
+}
+
+.diag {
+    padding: 18px;
+    border-radius: 12px;
+    margin: 12px 0;
+}
+
+.diag-fault {
+    background: #351d2b;
+    border-color: #ef6479;
+    color: #ffe0e5;
+}
+
+.diag-normal {
+    background: #12352f;
+    border-color: #36c99a;
+    color: #d4fff0;
+}
+
+.diag-inconclusive {
+    background: #3a301c;
+    border-color: #e9b64e;
+    color: #fff0c9;
+}
+
+.src-sim, .src-real {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin: 12px 0;
+}
+
+.src-sim {
+    background: #3b301b;
+    border: 1px solid #d9a441;
+    color: #ffe8b2;
+}
+
+.src-real {
+    background: #12372d;
+    border: 1px solid #36c99a;
+    color: #d2ffed;
+}
+
+.foot {
+    color: #8da9c5;
+    font-size: 0.85rem;
+    margin-top: 30px;
+    text-align: center;
+    border-top: 1px solid #294866;
+    padding-top: 15px;
+}
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #294866;
+    border-radius: 10px;
+}
+
+hr {
+    border-color: #294866;
+}
+
+/* FIX 1: Make all text readable */
+
+.stApp, .stApp p, .stApp label,
+.stApp span, .stApp small,
+.stApp [data-testid="stMarkdownContainer"] {
+    color: #dce8f5;
+}
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] small {
+    color: #dce8f5 !important;
+}
+
+/* Sidebar section headings */
+[data-testid="stSidebar"] h2 {
+    color: #42d5ff !important;
+}
+
+/* FIX 2: Improve information boxes */
+[data-testid="stAlert"] {
+    background: #162e49 !important;
+    border: 1px solid #34709a !important;
+    color: #e6f3ff !important;
+}
+
+[data-testid="stAlert"] p {
+    color: #e6f3ff !important;
+}
+
+/* FIX 3: Make numbered circles small again */
+.step .n {
+    display: inline-flex !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    line-height: 32px !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 50% !important;
+    background: #087eae !important;
+    color: white !important;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* FIX 4: Sidebar separation */
+[data-testid="stSidebar"] {
+    background: #0b1728 !important;
+    border-right: 1px solid #294866;
+}
+
+/* FIX 5: Hide the white toolbar background */
+header[data-testid="stHeader"] {
+    background: #0b1728 !important;
+}
+
+/* FIX 6: Improve expander text */
+[data-testid="stExpander"] {
+    border: 1px solid #294866;
+    border-radius: 10px;
+}
+
+[data-testid="stExpander"] summary {
+    color: #e6edf7 !important;
+}
+
+/* FIX 7: Smooth card hover */
+.step, [data-testid="stMetric"] {
+    transition: all 0.3s ease;
+}
+
+.step:hover, [data-testid="stMetric"]:hover {
+    border-color: #38cfff;
+    box-shadow: 0 0 16px rgba(56, 207, 255, 0.18);
+    transform: translateY(-3px);
+}
+
+/* FIX: Streamlit success, warning, error and info boxes */
+
+/* Success */
+[data-testid="stAlert"][kind="success"] {
+    background: #123b30 !important;
+    border: 1px solid #27c995 !important;
+}
+[data-testid="stAlert"][kind="success] * {
+    color: #d7fff0 !important;
+}
+
+/* Warning */
+[data-testid="stAlert"][kind="warning"] {
+    background: #3d301a !important;
+    border: 1px solid #e8b34c !important;
+}
+[data-testid="stAlert"][kind="warning"] * {
+    color: #ffedc2 !important;
+}
+
+/* Error */
+[data-testid="stAlert"][kind="error"] {
+    background: #401f2a !important;
+    border: 1px solid #ef6479 !important;
+}
+[data-testid="stAlert"][kind="error"] * {
+    color: #ffe0e5 !important;
+}
+
+/* Information */
+[data-testid="stAlert"][kind="info"] {
+    background: #142f4b !important;
+    border: 1px solid #38a9e8 !important;
+}
+[data-testid="stAlert"][kind="info"] * {
+    color: #d9efff !important;
+}
+
+/* General alert text fallback */
+[data-testid="stAlert"] p,
+[data-testid="stAlert"] span {
+    color: #e6f3ff !important;
+}
+
+/* Fix white download buttons */
+.stDownloadButton button {
+    background: #173451 !important;
+    color: #e6f3ff !important;
+    border: 1px solid #34709a !important;
+}
+
+/* =====================================
+   NETPULSE - FINAL READABILITY FIX
+   ===================================== */
+
+/* Force every Streamlit alert to dark theme */
+div[data-testid="stAlert"],
+div[data-testid="stAlert"] > div,
+div[data-testid="stAlert"] [data-testid] {
+    background: #142b45 !important;
+    background-color: #142b45 !important;
+    border-color: #34709a !important;
+}
+
+/* Force alert text to white */
+div[data-testid="stAlert"],
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span,
+div[data-testid="stAlert"] label,
+div[data-testid="stAlert"] div,
+div[data-testid="stAlert"] li {
+    color: #e6f3ff !important;
+}
+
+/* Success messages */
+div[data-testid="stAlert"]:has(svg[data-testid="stSuccessIcon"]) {
+    border: 1px solid #27c995 !important;
+}
+
+/* Warning and info messages */
+div[data-testid="stAlert"] {
+    border-radius: 12px !important;
+    padding: 12px !important;
+}
+
+/* Metric change indicators */
+[data-testid="stMetricDelta"],
+[data-testid="stMetricDelta"] p,
+[data-testid="stMetricDelta"] span {
+    color: #38cfff !important;
+    background: transparent !important;
+}
+
+/* Download buttons */
+[data-testid="stDownloadButton"] button {
+    background: #173451 !important;
+    color: #ffffff !important;
+    border: 1px solid #38cfff !important;
+}
+
+[data-testid="stDownloadButton"] button p {
+    color: #ffffff !important;
+}
+
+/* All normal buttons */
+.stButton button,
+.stButton button p {
+    color: white !important;
+}
+
+/* Keep input fields readable */
+.stTextInput input,
+.stTextArea textarea,
+.stNumberInput input,
+[data-baseweb="select"] div {
+    color: #172b42 !important;
+}
+
+/* Improve captions */
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #a9bed4 !important;
+}
+
+/* Smooth appearance */
+[data-testid="stAlert"],
+[data-testid="stMetric"] {
+    transition: all 0.25s ease;
+}
+
+/* NetPulse Branding */
+.brand-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding: 12px 4px;
+}
+
+.brand-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+    background: linear-gradient(135deg, #087eae, #6546c8);
+    box-shadow: 0 0 20px rgba(56, 207, 255, 0.3);
+}
+
+.brand-name {
+    color: #38cfff;
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.brand-tagline {
+    color: #a9bed4;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+
+/* BIG NETPULSE SIDEBAR BRANDING */
+
+.sidebar-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+    width: 100%;
+    padding: 24px 12px 28px 12px !important;
+    margin-bottom: 25px !important;
+    border-bottom: 1px solid #294866;
+}
+
+.sidebar-logo {
+    width: 68px !important;
+    height: 68px !important;
+    min-width: 68px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 18px !important;
+    font-size: 40px !important;
+    background: linear-gradient(135deg, #087eae, #6546c8);
+    box-shadow: 0 0 25px rgba(56,207,255,0.35);
+}
+
+.sidebar-brand-name {
+    color: #38cfff !important;
+    font-size: 34px !important;
+    font-weight: 850 !important;
+    letter-spacing: 1px !important;
+    line-height: 1.2 !important;
+}
+
+.sidebar-brand-sub {
+    color: #a9bed4 !important;
+    font-size: 11px !important;
+    letter-spacing: 1.5px !important;
+    margin-top: 5px;
+}
+
+[data-testid="stSidebar"] {
+    width: 320px !important;
+    min-width: 320px !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
 )
 
+
 st.markdown(
     """
-<div class="hero">
-<h1>📡 Why does my internet feel broken?</h1>
-<p>Runs a few quick checks, finds the most likely weak spot, and shows its working so you can verify it.</p>
-</div>
-""",
-    unsafe_allow_html=True,
+    <div class="brand-header">
+        <div class="brand-logo">📡</div>
+        <div>
+            <div class="brand-name">NetPulse</div>
+            <div class="brand-tagline">
+                NETWORK INTELLIGENCE PLATFORM
+            </div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <h1>Understand Your Network. Diagnose Every Problem.</h1>
+        <p>
+            Intelligent connectivity diagnosis, network health
+            monitoring and explainable anomaly detection.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 
+
 # ------------------------------------------------------------------ sidebar: settings
+
 with st.sidebar:
+
+
+
+    st.markdown(
+        """<div style="display:flex;align-items:center;gap:15px;padding:20px 5px;margin-bottom:20px;border-bottom:1px solid #294866;">
+        <div style="width:65px;height:65px;min-width:65px;border-radius:16px;background:linear-gradient(135deg,#087eae,#6546c8);display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 0 20px #087eae66;">📡</div>
+        <div style="display:flex;flex-direction:column;">
+        <div style="color:#38cfff;font-size:32px;font-weight:800;line-height:1.2;">NetPulse</div>
+        <div style="color:#a9bed4;font-size:10px;letter-spacing:1.5px;">NETWORK INTELLIGENCE</div>
+        </div></div>""",
+        unsafe_allow_html=True
+    )
+
     st.header("1. Choose a test")
+
     mode = st.radio("Where should the data come from?", [MODE_LIVE, MODE_SIM], index=1, key="mode",
                     help="The simulator needs no internet and is the quickest way to see every result type.")
     scenario_key, seed = "normal", 42
